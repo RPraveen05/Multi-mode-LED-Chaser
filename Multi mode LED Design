@@ -1,0 +1,54 @@
+`timescale 1ns / 1ps
+
+module LED_Chaser_Design(
+    input clk,
+    input [3:0] sw,
+    output reg [7:0] led
+    );
+    
+    reg[27:0] clk_div = 28'b0;
+    reg Slow_clk;
+    
+    always @(posedge clk) begin
+     clk_div <= clk_div + 1'b1;
+     end
+     
+    always @(*) begin
+    case(sw[3:2]) 
+    2'b00 : Slow_clk = clk_div[25];
+    2'b01 : Slow_clk = clk_div[24]; 
+    2'b10 : Slow_clk = clk_div[23];
+    2'b11 : Slow_clk = clk_div[22];
+    endcase
+    end
+    
+    reg [2:0] led_index = 3'd0;   
+    reg [3:0] bounce_cnt = 4'h0;
+    
+    always @(posedge Slow_clk) begin
+    if(bounce_cnt >= 4'd13)
+     bounce_cnt <= 4'd0;
+    else
+    bounce_cnt <=  bounce_cnt +1'b1;
+    
+    case(sw[1:0])
+    2'b00 : led_index <= led_index + 1'b1;
+    2'b01 : led_index <= led_index - 1'b1;
+    default : led_index <= (bounce_cnt > 4'd7 ) ? (4'd14 - bounce_cnt ) : bounce_cnt;
+    endcase
+    end
+    
+    always @(*) begin
+    case(led_index)
+    3'd0 : led = 8'b00000001;
+    3'd1 : led = 8'b00000010;
+    3'd2 : led = 8'b00000100;
+    3'd3 : led = 8'b00001000;
+    3'd4 : led = 8'b00010000;
+    3'd5 : led = 8'b00100000;
+    3'd6 : led = 8'b01000000;
+    3'd7 : led = 8'b10000000;
+    endcase
+    end
+    
+endmodule
